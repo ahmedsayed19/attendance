@@ -2,3 +2,4 @@ migrations
 env
 .env
 __init__.py
+*.sqlite3
