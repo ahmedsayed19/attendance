@@ -1,7 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from datetime import datetime, timedelta
 from .models import Attendance, AttendanceAction, serialize_actions_per_employee_UTC, get_hours_minutes, calc_duration_for_emp
 
 
@@ -16,23 +15,8 @@ def employee_day_attendance(request, employee, date):
 
     actions = AttendanceAction.objects.filter(employee=attended_employee).order_by('-action_time')
 
-    delta=timedelta()
-    isCheckIn = True
-    checkin = None
-    # checkin = datetime()
-    for q in actions:
-        print(q.action, q.action_time)
-        if q.action == 'CheckIn' and isCheckIn:
-            checkin = q.action_time
-            isCheckIn = False
-        
-        elif q.action == 'CheckOut' and not isCheckIn:
-            delta += checkin - q.action_time
-            isCheckIn = True
-
-
-
-
+    delta = calc_duration_for_emp(actions)
+    
     context = {
         'duration': get_hours_minutes(delta),
         'attended': True

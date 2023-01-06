@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from django.db import models
 
 
@@ -29,24 +29,31 @@ class AttendanceAction(models.Model):
     def __str__(self) -> str:
         return str(self.employee) 
 
-def calc_duration_for_emp(queryset):
-    print('Im in calc')
+
+# Utilities 
+
+def calc_duration_for_emp(actions):
     delta=timedelta()
-    isCheckIn = True
+    isCheckIn = False
     checkin = None
-    # checkin = datetime()
-    for q in queryset:
-        print(q.action, q.action_time)
-        if q.action == 'CheckIn' and isCheckIn:
+    for q in actions:
+        if q.action == 'CheckIn' and not isCheckIn:
             checkin = q.action_time
+            isCheckIn = True
+        
+        elif q.action == 'CheckOut' and isCheckIn:
+            delta += checkin - q.action_time
             isCheckIn = False
         
         elif q.action == 'CheckOut' and not isCheckIn:
-            delta += checkin - q.action_time
-            isCheckIn = True
+            delta += datetime.combine(datetime.combine(q.action_time.date(), q.action_time.time() - q.action_time.date(), time(00,00))) 
 
-        print(delta.seconds)
-        return delta
+    if isCheckIn:
+        action_date, action_time = actions.first().action_time.date(), actions.first().action_time.time()
+        delta += datetime.combine(action_date, time(23,59,59)) - datetime.combine(action_date, action_time) 
+        delta += timedelta(seconds=1)
+
+    return delta
 
 
 def get_hours_minutes(t):
